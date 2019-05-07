@@ -68,18 +68,9 @@ arg_pair *mkargpair(char *str)
   return newpair;
 }
 
-int main(int argc, char **argv) {
-  printf("Content-Type: text/plain;charset=utf-8\r\n\r\n");
-  const char *query_string=getenv("QUERY_STRING");
-  if( !query_string ) /* if no arguments/undefined variable */
-  {
-    printf("No parameters were passed…\r\n");
-    return (0);
-  }
-  else
-  {
+void tokenize_query(char *query_string, arg_pair *dest){
 #ifdef DEBUG
-    printf("QUERY_STRING=%s\r\n",query_string);
+    printf("QUERY_STRING=%s\r\n",*query_string);
 #endif
 
     /* pass one name=value pair per call to mkargpair() */
@@ -87,7 +78,7 @@ int main(int argc, char **argv) {
     /* get first key pair */
     int offset=0;
     char *a_pair;
-    arg_pair *root_keypair=NULL; /* pointer to start of linked list */
+    arg_pair *root_keypair=dest; /* pointer to start of linked list */
     arg_pair *curr_pair=NULL;
     arg_pair *last_pair=NULL;
     while(offset < strlen(query_string))
@@ -99,7 +90,17 @@ int main(int argc, char **argv) {
       offset=offset+strlen(a_pair)+1;
 
       if(curr_pair==NULL) {
+        /* first run. Since we're passing pointers all over the place, we need
+           to do some pointer sorcery on the root (basically, all the members of
+           our first run from mkargpair() need to be in the dest struct, so that
+           they can be used outside of this function.)
+        */
         curr_pair = mkargpair(a_pair);
+        dest->key=curr_pair->key;
+        dest->value=curr_pair->value;
+        dest->next=curr_pair->next;
+        free(curr_pair);
+        curr_pair=dest;
         root_keypair = curr_pair;
       }
       else
@@ -109,17 +110,34 @@ int main(int argc, char **argv) {
       }
 
       free(a_pair); /* free the malloc from get_key_pair */
-#ifdef DEBUG
-      printf("MAIN FUNCTION:\r\n");
-#endif
-      printf("key:\t%s\r\n",curr_pair->key);
-      printf("value:\t%s\r\n",curr_pair->value);
-      printf("\r\n");
     }
+    dest->next=root_keypair->next;
+}
 
-
-    curr_pair=root_keypair;
-    free_pair_list(curr_pair);
+int main(int argc, char **argv) {
+  printf("Content-Type: text/plain;charset=utf-8\r\n\r\n");
+  const char *query_string = getenv("QUERY_STRING");
+  if( !query_string ) /* if no arguments/undefined variable */
+  {
+    printf("No parameters were passed…\r\n");
     return (0);
   }
+  else
+  {
+    /* initialize our root node */
+    arg_pair *args = malloc(sizeof(struct arg_pair));
+    /* convert our parameters into key/value linked list*/
+    tokenize_query(query_string, args);
+    int i=1;
+    arg_pair *arg_ptr = args; /* Don't lose our root node pointer! */
+    while(arg_ptr)
+    {
+      printf("%d:\t%s = %s\r\n", i, arg_ptr->key, arg_ptr->value);
+      arg_ptr = arg_ptr->next;
+      i++;
+    }
+    free_pair_list(args);
+  }
+  return 0;
 }
+
