@@ -60,33 +60,20 @@ arg_pair *mkargpair(char *str)
   newpair->next = NULL;
   newpair->key = strndup(str,keylenfound);
   newpair->value = strndup(str+keylen,strlen(str)-keylen);
-#ifdef DEBUG
-  printf("key: %s, size: %d\r\n",newpair->key, strlen(newpair->key));
-  printf("value: %s, size: %d\r\n",newpair->value, strlen(newpair->key));
-#endif
-  
   return newpair;
 }
 
 void tokenize_query(char *query_string, arg_pair *dest){
-#ifdef DEBUG
-    printf("QUERY_STRING=%s\r\n",*query_string);
-#endif
-
     /* pass one name=value pair per call to mkargpair() */
 
     /* get first key pair */
     int offset=0;
-    char *a_pair;
+    char *a_pair; /* a_pair is a string containing a single 'key=value' entry. */
     arg_pair *root_keypair=dest; /* pointer to start of linked list */
     arg_pair *curr_pair=NULL;
-    arg_pair *last_pair=NULL;
     while(offset < strlen(query_string))
     {
       a_pair = get_key_pair(query_string, offset); /* remember - this does a malloc */
-#ifdef DEBUG
-      printf("a_pair: %s\r\n", a_pair);
-#endif
       offset=offset+strlen(a_pair)+1;
 
       if(curr_pair==NULL) {
