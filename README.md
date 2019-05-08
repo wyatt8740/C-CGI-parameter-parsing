@@ -10,11 +10,13 @@ ever come of this.
 This program will create a C structure typedef'd as the type `arg_pair`, which
 follows this scheme:
 
-    struct arg_pair {
-      char *key;
-      char *value;
-      arg_pair *next;
-    };
+```c
+struct arg_pair {
+  char *key;
+  char *value;
+  arg_pair *next;
+};
+```
 
 As you can probably see, this means that all arguments (as seen in the URI in
 in key=value form) are stored in a linked list.
